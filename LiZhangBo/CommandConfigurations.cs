@@ -17,9 +17,17 @@
             set => SetProperty(ref targetPath, value);
         }
 
+        public virtual string SizeLimit
+        {
+            get => sizeLimit;
+            set => SetProperty(ref sizeLimit, value);
+        }
+
         abstract public VideoConfigurations VideoConfiguration { get; set; }
 
         abstract public AudioConfigurations AudioConfiguration { get; set; }
+
+        string sizeLimit;
 
         string sourcePath;
 

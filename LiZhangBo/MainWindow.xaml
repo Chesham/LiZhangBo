@@ -71,11 +71,15 @@
                     <TextBox Grid.Column="1" Text="{Binding TargetPath}"/>
                     <Button Grid.Column="2" Content="選擇檔案 ..."/>
                 </Grid>
+                <WrapPanel>
+                    <TextBlock Text="Size Limit"/>
+                    <TextBox Text="{Binding SizeLimit}"/>
+                </WrapPanel>
                 <GroupBox>
                     <GroupBox.Header>
                         <CheckBox IsChecked="{Binding VideoConfiguration.Enabled}">Video</CheckBox>
                     </GroupBox.Header>
-                    <WrapPanel>
+                    <WrapPanel IsEnabled="{Binding VideoConfiguration.Enabled}">
                         <TextBlock Text="Codec"/>
                         <ComboBox ItemsSource="{Binding VideoConfiguration.SupportedCodecs}" SelectedItem="{Binding VideoConfiguration.Codec}">
                         </ComboBox>
@@ -86,6 +90,7 @@
                     <GroupBox.Header>
                         <CheckBox>Audio</CheckBox>
                     </GroupBox.Header>
+                    <WrapPanel IsEnabled="{Binding AudioConfiguration.Enabled}"/>
                 </GroupBox>
             </StackPanel>
         </GroupBox>
