@@ -47,7 +47,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Source"/>
                     <TextBox Grid.Column="1" Text="{Binding SourcePath}"/>
-                    <Button Grid.Column="2" Content="選擇檔案 ..."/>
+                    <Button Grid.Column="2" Content="選擇檔案 ..." Click="SelectSourcePath"/>
                 </Grid>
                 <GroupBox Header="Interval">
                     <WrapPanel>
@@ -69,7 +69,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Target"/>
                     <TextBox Grid.Column="1" Text="{Binding TargetPath}"/>
-                    <Button Grid.Column="2" Content="選擇檔案 ..."/>
+                    <Button Grid.Column="2" Content="選擇檔案 ..." Click="SelectTargetPath"/>
                 </Grid>
                 <WrapPanel>
                     <TextBlock Text="Size Limit"/>

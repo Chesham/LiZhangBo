@@ -20,10 +20,30 @@ namespace LiZhangBo
     /// </summary>
     public partial class MainWindow : Window
     {
+        FFMpegConfigurations Configurations { get; set; } = new FFMpegConfigurations();
+
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new FFMpegConfigurations();
+            DataContext = Configurations;
+        }
+
+        private void SelectSourcePath(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog();
+            var result = dlg.ShowDialog();
+            if (!result ?? true)
+                return;
+            Configurations.SourcePath = dlg.FileName;
+        }
+
+        private void SelectTargetPath(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog();
+            var result = dlg.ShowDialog();
+            if (!result ?? true)
+                return;
+            Configurations.TargetPath = dlg.FileName;
         }
     }
 }
