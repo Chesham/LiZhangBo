@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,10 +24,13 @@ namespace LiZhangBo
     {
         FFMpegConfigurations Configurations { get; set; } = new FFMpegConfigurations();
 
+        OperatingStates OperatingState { get; set; } = new OperatingStates();
+
         public MainWindow()
         {
             InitializeComponent();
             DataContext = Configurations;
+            StartPanel.DataContext = OperatingState;
         }
 
         private void SelectSourcePath(object sender, RoutedEventArgs e)
@@ -44,6 +49,66 @@ namespace LiZhangBo
             if (!result ?? true)
                 return;
             Configurations.TargetPath = dlg.FileName;
+        }
+
+        private void OnStart(object sender, RoutedEventArgs e)
+        {
+            var state = OperatingState;
+            if (state.Task != null)
+            {
+                // cancellation
+                state.Cts.Cancel();
+                return;
+            }
+            var timeout = TimeSpan.FromMinutes(5);
+            var cts = (state.Cts = new CancellationTokenSource(timeout));
+            var config = Configurations;
+            var videoConfig = config.VideoConfiguration;
+            state.Task = Task.Run(() =>
+            {
+                var seek = config.Seek.ParseToTimeSpan();
+                var to = config.To.ParseToTimeSpan();
+                if (seek != null && to == null || seek == null && to != null)
+                    throw new ArgumentNullException();
+                var sizeLimit = config.SizeLimit.ParseSize() * 8;
+                var videoSettings = videoConfig.Enabled ? $"-c:v {videoConfig.Codec}{(videoConfig.Is2Passing ? " -pass 1" : string.Empty)}{(seek == null ? string.Empty : $"{sizeLimit / (to - seek).Value.TotalSeconds}".WithSwitch("-b:v"))}" : "-vn";
+                var args = $@"-y {config.Seek.WithSwitch("-ss")}{config.To.WithSwitch("-to")} -i ""{config.SourcePath}"" {videoSettings}{(config.AudioConfiguration.Enabled ? string.Empty : " -an")} ""{config.TargetPath}""";
+                var proc = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = config.Executable,
+                        Arguments = args,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    },
+                    EnableRaisingEvents = true
+                };
+                cts.Token.Register(() => proc.Kill());
+                var procOutput = new StringBuilder();
+                proc.OutputDataReceived += (_, e_) =>
+                {
+                    procOutput.AppendLine(e_.Data);
+                };
+                var procError = new StringBuilder();
+                proc.ErrorDataReceived += (_, e_) =>
+                {
+                    procError.AppendLine(e_.Data);
+                };
+                proc.Exited += (_, e_) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        state.Task = null;
+                        state.Cts = null;
+                    });
+                };
+                proc.Start();
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
+            });
         }
     }
 }

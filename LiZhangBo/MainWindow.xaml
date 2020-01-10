@@ -101,8 +101,8 @@
                         </GroupBox>
                     </StackPanel>
                 </GroupBox>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button>開始</Button>
+                <StackPanel x:Name="StartPanel" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="{Binding StartButtonText}" Click="OnStart"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

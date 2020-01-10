@@ -27,7 +27,7 @@
 
         abstract public AudioConfigurations AudioConfiguration { get; set; }
 
-        string sizeLimit;
+        string sizeLimit = "60M";
 
         string sourcePath;
 
