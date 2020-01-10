@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace LiZhangBo
@@ -18,6 +14,14 @@ namespace LiZhangBo
         }
 
         public CancellationTokenSource Cts { get; set; }
+
+        public string ConsoleOutput
+        {
+            get => consoleOutput;
+            set => SetProperty(ref consoleOutput, value);
+        }
+
+        string consoleOutput;
 
         Task task;
     }

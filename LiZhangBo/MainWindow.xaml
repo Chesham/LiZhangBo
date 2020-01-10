@@ -101,6 +101,9 @@
                         </GroupBox>
                     </StackPanel>
                 </GroupBox>
+                <GroupBox Header="Console" x:Name="ConsolePanel">
+                    <TextBox IsReadOnly="True" Text="{Binding ConsoleOutput}" Height="100" MaxHeight="100" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextChanged="OnConsoleOutputChanged"/>
+                </GroupBox>
                 <StackPanel x:Name="StartPanel" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="{Binding StartButtonText}" Click="OnStart"/>
                 </StackPanel>

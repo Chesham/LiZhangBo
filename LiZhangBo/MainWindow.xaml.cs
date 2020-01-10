@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -31,6 +32,7 @@ namespace LiZhangBo
             InitializeComponent();
             DataContext = Configurations;
             StartPanel.DataContext = OperatingState;
+            ConsolePanel.DataContext = OperatingState;
         }
 
         private void SelectSourcePath(object sender, RoutedEventArgs e)
@@ -96,6 +98,7 @@ namespace LiZhangBo
                 proc.ErrorDataReceived += (_, e_) =>
                 {
                     procError.AppendLine(e_.Data);
+                    state.ConsoleOutput = procError.ToString();
                 };
                 proc.Exited += (_, e_) =>
                 {
@@ -109,6 +112,14 @@ namespace LiZhangBo
                 proc.BeginOutputReadLine();
                 proc.BeginErrorReadLine();
             });
+        }
+
+        private void OnConsoleOutputChanged(object sender, TextChangedEventArgs e)
+        {
+            var target = sender as TextBox;
+            if (target == null)
+                return;
+            target?.ScrollToEnd();
         }
     }
 }
