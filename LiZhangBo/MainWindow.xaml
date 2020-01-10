@@ -101,6 +101,9 @@
                         </GroupBox>
                     </StackPanel>
                 </GroupBox>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button>開始</Button>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
