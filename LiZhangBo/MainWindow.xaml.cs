@@ -23,6 +23,7 @@ namespace LiZhangBo
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new FFMpegConfigurations();
         }
     }
 }

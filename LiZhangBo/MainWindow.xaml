@@ -33,6 +33,9 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
     </Window.Resources>
+    <Window.DataContext>
+        <local:FFMpegConfigurations/>
+    </Window.DataContext>
     <StackPanel Margin="5">
         <GroupBox Header="Input">
             <StackPanel>
@@ -43,15 +46,15 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Source"/>
-                    <TextBox Grid.Column="1"/>
+                    <TextBox Grid.Column="1" Text="{Binding SourcePath}"/>
                     <Button Grid.Column="2" Content="選擇檔案 ..."/>
                 </Grid>
                 <GroupBox Header="Interval">
                     <WrapPanel>
                         <TextBlock Text="Seek"/>
-                        <TextBox/>
+                        <TextBox Text="{Binding Seek}"/>
                         <TextBlock Text="To"/>
-                        <TextBox/>
+                        <TextBox Text="{Binding To}"/>
                     </WrapPanel>
                 </GroupBox>
             </StackPanel>
@@ -65,16 +68,18 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Target"/>
-                    <TextBox Grid.Column="1"/>
+                    <TextBox Grid.Column="1" Text="{Binding TargetPath}"/>
                     <Button Grid.Column="2" Content="選擇檔案 ..."/>
                 </Grid>
-                <GroupBox Header="Video">
+                <GroupBox>
+                    <GroupBox.Header>
+                        <CheckBox IsChecked="{Binding VideoConfiguration.Enabled}">Video</CheckBox>
+                    </GroupBox.Header>
                     <WrapPanel>
                         <TextBlock Text="Codec"/>
-                        <ComboBox>
-                            <ComboBoxItem IsSelected="True">libx264</ComboBoxItem>
+                        <ComboBox ItemsSource="{Binding VideoConfiguration.SupportedCodecs}" SelectedItem="{Binding VideoConfiguration.Codec}">
                         </ComboBox>
-                        <CheckBox IsChecked="True">2 pass</CheckBox>
+                        <CheckBox IsChecked="{Binding VideoConfiguration.Is2Passing}">2 pass</CheckBox>
                     </WrapPanel>
                 </GroupBox>
                 <GroupBox>
