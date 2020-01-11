@@ -27,6 +27,7 @@
         </Style>
         <Style TargetType="{x:Type CheckBox}">
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Margin" Value="5"/>
         </Style>
         <Style TargetType="{x:Type ComboBox}">
@@ -37,11 +38,31 @@
         <local:FFMpegConfigurations/>
     </Window.DataContext>
     <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem>
-                <TextBlock Text="Ready"/>
-            </StatusBarItem>
-        </StatusBar>
+        <StackPanel DockPanel.Dock="Bottom" x:Name="StatusPanel">
+            <StatusBar>
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem>
+                    <TextBlock DockPanel.Dock="Left" Text="{Binding Status}"/>
+                </StatusBarItem>
+                <StatusBarItem Grid.Column="2">
+                    <Button x:Name="StartBtn" DockPanel.Dock="Right" Content="{Binding StartButtonText}" Click="OnStart"/>
+                </StatusBarItem>
+            </StatusBar>
+            <ProgressBar Height="4" Value="{Binding Value}" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" IsIndeterminate="{Binding IsIndeterminate}" BorderThickness="0"/>
+        </StackPanel>
         <ScrollViewer>
             <StackPanel Margin="5">
                 <GroupBox Header="Input">
@@ -53,13 +74,14 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="Source"/>
-                            <TextBox Grid.Column="1" Text="{Binding SourcePath}"/>
+                            <TextBox Grid.Column="1" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}"/>
                             <Button Grid.Column="2" Content="選擇檔案 ..." Click="SelectSourcePath"/>
                         </Grid>
                         <GroupBox Header="Interval">
                             <WrapPanel>
                                 <TextBlock Text="Seek"/>
                                 <TextBox Text="{Binding Seek}"/>
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
                                 <TextBlock Text="To"/>
                                 <TextBox Text="{Binding To}"/>
                             </WrapPanel>
@@ -78,18 +100,33 @@
                             <TextBox Grid.Column="1" Text="{Binding TargetPath}"/>
                             <Button Grid.Column="2" Content="選擇檔案 ..." Click="SelectTargetPath"/>
                         </Grid>
-                        <WrapPanel>
-                            <TextBlock Text="Size Limit"/>
-                            <TextBox Text="{Binding SizeLimit}"/>
-                        </WrapPanel>
+                        <GroupBox Header="Limits">
+                            <WrapPanel>
+                                <CheckBox IsChecked="{Binding IsFileSizeLimited}">
+                                    <WrapPanel IsEnabled="{Binding (CheckBox.IsChecked), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type CheckBox}}}">
+                                        <TextBlock Text="Max file size"/>
+                                        <TextBox Text="{Binding SizeLimit}"/>
+                                        <TextBlock Text="Bytes"/>
+                                    </WrapPanel>
+                                </CheckBox>
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
+                                <CheckBox IsChecked="{Binding IsMaxBitrateLimited}">
+                                    <WrapPanel IsEnabled="{Binding (CheckBox.IsChecked), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type CheckBox}}}">
+                                        <TextBlock Text="Max bitrate"/>
+                                        <TextBox Text="{Binding BitrateLimit}"/>
+                                        <TextBlock Text="bps"/>
+                                    </WrapPanel>
+                                </CheckBox>
+                            </WrapPanel>
+                        </GroupBox>
                         <GroupBox>
                             <GroupBox.Header>
                                 <CheckBox IsChecked="{Binding VideoConfiguration.Enabled}">Video</CheckBox>
                             </GroupBox.Header>
                             <WrapPanel IsEnabled="{Binding VideoConfiguration.Enabled}">
                                 <TextBlock Text="Codec"/>
-                                <ComboBox ItemsSource="{Binding VideoConfiguration.SupportedCodecs}" SelectedItem="{Binding VideoConfiguration.Codec}">
-                                </ComboBox>
+                                <ComboBox ItemsSource="{Binding VideoConfiguration.SupportedCodecs}" SelectedItem="{Binding VideoConfiguration.Codec}"/>
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
                                 <CheckBox IsChecked="{Binding VideoConfiguration.Is2Passing}">2 pass</CheckBox>
                             </WrapPanel>
                         </GroupBox>
@@ -104,9 +141,6 @@
                 <GroupBox Header="Console" x:Name="ConsolePanel">
                     <TextBox IsReadOnly="True" Text="{Binding ConsoleOutput}" Height="100" MaxHeight="100" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextChanged="OnConsoleOutputChanged"/>
                 </GroupBox>
-                <StackPanel x:Name="StartPanel" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{Binding StartButtonText}" Click="OnStart"/>
-                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

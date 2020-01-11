@@ -60,6 +60,7 @@
     <Compile Include="FFMpegAudioConfigurations.cs" />
     <Compile Include="FFMpegVideoConfigurations.cs" />
     <Compile Include="OperatingStates.cs" />
+    <Compile Include="StatusBarModel.cs" />
     <Compile Include="VideoConfigurations.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
