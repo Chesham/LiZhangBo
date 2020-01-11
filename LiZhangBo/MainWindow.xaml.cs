@@ -27,12 +27,15 @@ namespace LiZhangBo
 
         OperatingStates OperatingState { get; set; } = new OperatingStates();
 
+        StatusBarModel Status { get; set; } = new StatusBarModel();
+
         public MainWindow()
         {
             InitializeComponent();
             DataContext = Configurations;
             StartBtn.DataContext = OperatingState;
             ConsolePanel.DataContext = OperatingState;
+            StatusPanel.DataContext = Status;
         }
 
         private void SelectSourcePath(object sender, RoutedEventArgs e)
