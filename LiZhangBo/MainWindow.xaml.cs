@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,7 +16,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace LiZhangBo
 {
@@ -66,109 +66,123 @@ namespace LiZhangBo
                 state.Cts.Cancel();
                 return;
             }
-            var startAt = DateTime.UtcNow;
-            var timeout = TimeSpan.FromMinutes(5);
-            var cts = (state.Cts = new CancellationTokenSource(timeout));
-            var config = Configurations;
-            var videoConfig = config.VideoConfiguration;
-            var elapsedEventHandler = new ElapsedEventHandler((_, e_) =>
+            var sourcePath = Configurations.SourcePath;
+            var targetPath = Configurations.TargetPath;
+            try
             {
-                Status.Status = $"{DateTime.UtcNow - startAt:hh\\:mm\\:ss} processing ...";
-            });
-            var timer = new System.Timers.Timer
-            {
-                AutoReset = true,
-                Interval = TimeSpan.FromSeconds(1).TotalMilliseconds,
-                Enabled = true
-            };
-            timer.Elapsed += elapsedEventHandler;
-            var onExited = new EventHandler((sender_, e_) =>
-            {
-                try
+                if (!File.Exists(sourcePath))
+                    throw new FileNotFoundException("來源路徑檔案不存在", sourcePath);
+                if (!File.Exists(targetPath))
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                var startAt = DateTime.UtcNow;
+                var timeout = TimeSpan.FromMinutes(5);
+                var cts = (state.Cts = new CancellationTokenSource(timeout));
+                var config = Configurations;
+                var videoConfig = config.VideoConfiguration;
+                var elapsedEventHandler = new ElapsedEventHandler((_, e_) =>
                 {
-                    state.Task = null;
-                    state.Cts = null;
-                }
-                catch (Exception)
+                    Status.Status = $"{DateTime.UtcNow - startAt:hh\\:mm\\:ss} processing ...";
+                });
+                var timer = new System.Timers.Timer
                 {
+                    AutoReset = true,
+                    Interval = TimeSpan.FromSeconds(1).TotalMilliseconds,
+                    Enabled = true
+                };
+                timer.Elapsed += elapsedEventHandler;
+                var onExited = new EventHandler((sender_, e_) =>
+                {
+                    try
+                    {
+                        state.Task = null;
+                        state.Cts = null;
+                    }
+                    catch (Exception)
+                    {
                     // never throw
                 }
-                finally
-                {
-                    timer.Stop();
-                    Status.IsIndeterminate = false;
-                    if (!(sender_ is Exception) && !cts.IsCancellationRequested)
+                    finally
                     {
-                        Status.Value = Status.Maximum;
-                        Status.Status = $"{DateTime.UtcNow - startAt:hh\\:mm\\:ss\\.fff} done";
-                    }
-                    else
-                    {
-                        Status.Value = Status.Minimum;
-                        if (sender_ is Exception)
-                            Status.Status = (sender_ as Exception).Message;
-                        else if (cts.IsCancellationRequested)
-                            Status.Status = "processing cancelled";
-                    }
-                }
-            });
-            state.Task = Task.Run(() =>
-            {
-                try
-                {
-                    var seek = config.Seek.ParseToTimeSpan();
-                    var to = config.To.ParseToTimeSpan();
-                    if (seek != null && to == null || seek == null && to != null)
-                        throw new ArgumentNullException();
-                    var sizeLimit = seek == null ? null : config.SizeLimit.ParseSize() * 8 / (to - seek).Value.TotalSeconds;
-                    if (sizeLimit.HasValue)
-                        sizeLimit = Math.Round(sizeLimit.Value);
-                    var bitrateLimit = config.BitrateLimit.ParseSize();
-                    if (sizeLimit > bitrateLimit)
-                        sizeLimit = bitrateLimit;
-                    var sizeLimitSwitch = sizeLimit == null ? string.Empty : $"{sizeLimit}".WithSwitch("-b:v");
-                    var videoSettings = videoConfig.Enabled ? $"-c:v {videoConfig.Codec}{(videoConfig.Is2Passing ? " -pass 1" : string.Empty)}{(seek == null ? string.Empty : sizeLimitSwitch)}" : "-vn";
-                    var args = $@"-y {config.Seek.WithSwitch("-ss")}{config.To.WithSwitch("-to")} -i ""{config.SourcePath}"" {videoSettings}{(config.AudioConfiguration.Enabled ? string.Empty : " -an")} ""{config.TargetPath}""";
-                    var proc = new Process
-                    {
-                        StartInfo = new ProcessStartInfo
+                        timer.Stop();
+                        Status.IsIndeterminate = false;
+                        if (!(sender_ is Exception) && !cts.IsCancellationRequested)
                         {
-                            FileName = config.Executable,
-                            Arguments = args,
-                            RedirectStandardError = true,
-                            RedirectStandardOutput = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            StandardOutputEncoding = Encoding.UTF8,
-                            StandardErrorEncoding = Encoding.UTF8,
-                        },
-                        EnableRaisingEvents = true
-                    };
-                    cts.Token.Register(() => proc.Kill());
-                    var procOutput = new StringBuilder();
-                    proc.OutputDataReceived += (_, e_) =>
-                    {
-                        procOutput.AppendLine(e_.Data);
-                    };
-                    var procError = new StringBuilder();
-                    proc.ErrorDataReceived += (_, e_) =>
-                    {
-                        procError.AppendLine(e_.Data);
-                        state.ConsoleOutput = procError.ToString();
-                    };
-                    proc.Exited += onExited;
-                    proc.Start();
-                    proc.BeginOutputReadLine();
-                    proc.BeginErrorReadLine();
-                    Status.IsIndeterminate = true;
-                    elapsedEventHandler(this, null);
-                }
-                catch (Exception ex)
+                            Status.Value = Status.Maximum;
+                            Status.Status = $"{DateTime.UtcNow - startAt:hh\\:mm\\:ss\\.fff} done";
+                        }
+                        else
+                        {
+                            Status.Value = Status.Minimum;
+                            if (sender_ is Exception)
+                                Status.Status = (sender_ as Exception).Message;
+                            else if (cts.IsCancellationRequested)
+                                Status.Status = "processing cancelled";
+                        }
+                    }
+                });
+                state.Task = Task.Run(() =>
                 {
-                    onExited(ex, EventArgs.Empty);
-                    MessageBox.Show(ex.StackTrace, ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            });
+                    try
+                    {
+                        var seek = config.Seek.ParseToTimeSpan();
+                        var to = config.To.ParseToTimeSpan();
+                        if (seek != null && to == null || seek == null && to != null)
+                            throw new ArgumentNullException();
+                        var sizeLimit = seek == null ? null : config.SizeLimit.ParseSize() * 8 / (to - seek).Value.TotalSeconds;
+                        if (sizeLimit.HasValue)
+                            sizeLimit = Math.Round(sizeLimit.Value);
+                        var bitrateLimit = config.BitrateLimit.ParseSize();
+                        if (sizeLimit > bitrateLimit)
+                            sizeLimit = bitrateLimit;
+                        var sizeLimitSwitch = sizeLimit == null ? string.Empty : $"{sizeLimit}".WithSwitch("-b:v");
+                        var videoSettings = videoConfig.Enabled ? $"-c:v {videoConfig.Codec}{(videoConfig.Is2Passing ? " -pass 1" : string.Empty)}{(seek == null ? string.Empty : sizeLimitSwitch)}" : "-vn";
+                        var args = $@"-y {config.Seek.WithSwitch("-ss")}{config.To.WithSwitch("-to")} -i ""{config.SourcePath}"" {videoSettings}{(config.AudioConfiguration.Enabled ? string.Empty : " -an")} ""{config.TargetPath}""";
+                        var proc = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = config.Executable,
+                                Arguments = args,
+                                RedirectStandardError = true,
+                                RedirectStandardOutput = true,
+                                UseShellExecute = false,
+                                CreateNoWindow = true,
+                                StandardOutputEncoding = Encoding.UTF8,
+                                StandardErrorEncoding = Encoding.UTF8,
+                            },
+                            EnableRaisingEvents = true
+                        };
+                        cts.Token.Register(() => proc.Kill());
+                        var procOutput = new StringBuilder();
+                        proc.OutputDataReceived += (_, e_) =>
+                        {
+                            procOutput.AppendLine(e_.Data);
+                        };
+                        var procError = new StringBuilder();
+                        proc.ErrorDataReceived += (_, e_) =>
+                        {
+                            procError.AppendLine(e_.Data);
+                            state.ConsoleOutput = procError.ToString();
+                        };
+                        proc.Exited += onExited;
+                        proc.Start();
+                        proc.BeginOutputReadLine();
+                        proc.BeginErrorReadLine();
+                        Status.IsIndeterminate = true;
+                        elapsedEventHandler(this, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        onExited(ex, EventArgs.Empty);
+                        MessageBox.Show(ex.StackTrace, ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Status.Status = ex.Message;
+                MessageBox.Show(ex.StackTrace, ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void OnConsoleOutputChanged(object sender, TextChangedEventArgs e)
