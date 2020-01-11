@@ -1,4 +1,8 @@
-﻿namespace LiZhangBo
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace LiZhangBo
 {
     abstract class CommandConfigurations : PropertyChangedNotifiable
     {
@@ -8,7 +12,11 @@
         public virtual string SourcePath
         {
             get => sourcePath;
-            set => SetProperty(ref sourcePath, value);
+            set
+            {
+                targetPath = $"{Path.Combine(Path.GetDirectoryName(value), $"{Path.GetFileNameWithoutExtension(value)}-modified.{codecToExtension[VideoConfiguration.Codec]}")}";
+                SetProperty(ref sourcePath, value, nameof(SourcePath), nameof(TargetPath));
+            }
         }
         // 目標位置
         public virtual string TargetPath
@@ -44,6 +52,11 @@
         abstract public VideoConfigurations VideoConfiguration { get; set; }
 
         abstract public AudioConfigurations AudioConfiguration { get; set; }
+
+        IDictionary<string, string> codecToExtension = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "libx264", "mp4" }
+        };
 
         bool isMaxBitrateLimited = true;
 
