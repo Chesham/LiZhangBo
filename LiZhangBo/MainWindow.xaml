@@ -93,7 +93,7 @@
                                 <CheckBox IsChecked="{Binding IsMaxBitrateLimited}">
                                     <WrapPanel IsEnabled="{Binding (CheckBox.IsChecked), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type CheckBox}}}">
                                         <TextBlock Text="Max bitrate"/>
-                                        <TextBox Text="15M"/>
+                                        <TextBox Text="{Binding BitrateLimit}"/>
                                         <TextBlock Text="bps"/>
                                     </WrapPanel>
                                 </CheckBox>
