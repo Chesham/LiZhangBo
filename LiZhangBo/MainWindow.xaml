@@ -27,6 +27,7 @@
         </Style>
         <Style TargetType="{x:Type CheckBox}">
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Margin" Value="5"/>
         </Style>
         <Style TargetType="{x:Type ComboBox}">
@@ -60,6 +61,7 @@
                             <WrapPanel>
                                 <TextBlock Text="Seek"/>
                                 <TextBox Text="{Binding Seek}"/>
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
                                 <TextBlock Text="To"/>
                                 <TextBox Text="{Binding To}"/>
                             </WrapPanel>
@@ -78,18 +80,33 @@
                             <TextBox Grid.Column="1" Text="{Binding TargetPath}"/>
                             <Button Grid.Column="2" Content="選擇檔案 ..." Click="SelectTargetPath"/>
                         </Grid>
-                        <WrapPanel>
-                            <TextBlock Text="Size Limit"/>
-                            <TextBox Text="{Binding SizeLimit}"/>
-                        </WrapPanel>
+                        <GroupBox Header="Limits">
+                            <WrapPanel>
+                                <CheckBox IsChecked="{Binding IsFileSizeLimited}">
+                                    <WrapPanel IsEnabled="{Binding (CheckBox.IsChecked), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type CheckBox}}}">
+                                        <TextBlock Text="Max file size"/>
+                                        <TextBox Text="{Binding SizeLimit}"/>
+                                        <TextBlock Text="Bytes"/>
+                                    </WrapPanel>
+                                </CheckBox>
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
+                                <CheckBox IsChecked="{Binding IsMaxBitrateLimited}">
+                                    <WrapPanel IsEnabled="{Binding (CheckBox.IsChecked), RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type CheckBox}}}">
+                                        <TextBlock Text="Max bitrate"/>
+                                        <TextBox Text="15M"/>
+                                        <TextBlock Text="bps"/>
+                                    </WrapPanel>
+                                </CheckBox>
+                            </WrapPanel>
+                        </GroupBox>
                         <GroupBox>
                             <GroupBox.Header>
                                 <CheckBox IsChecked="{Binding VideoConfiguration.Enabled}">Video</CheckBox>
                             </GroupBox.Header>
                             <WrapPanel IsEnabled="{Binding VideoConfiguration.Enabled}">
                                 <TextBlock Text="Codec"/>
-                                <ComboBox ItemsSource="{Binding VideoConfiguration.SupportedCodecs}" SelectedItem="{Binding VideoConfiguration.Codec}">
-                                </ComboBox>
+                                <ComboBox ItemsSource="{Binding VideoConfiguration.SupportedCodecs}" SelectedItem="{Binding VideoConfiguration.Codec}"/>
+                                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
                                 <CheckBox IsChecked="{Binding VideoConfiguration.Is2Passing}">2 pass</CheckBox>
                             </WrapPanel>
                         </GroupBox>
