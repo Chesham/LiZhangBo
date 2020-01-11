@@ -105,6 +105,8 @@ namespace LiZhangBo
                             RedirectStandardOutput = true,
                             UseShellExecute = false,
                             CreateNoWindow = true,
+                            StandardOutputEncoding = Encoding.UTF8,
+                            StandardErrorEncoding = Encoding.UTF8,
                         },
                         EnableRaisingEvents = true
                     };
