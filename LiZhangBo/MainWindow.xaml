@@ -38,9 +38,27 @@
         <local:FFMpegConfigurations/>
     </Window.DataContext>
     <DockPanel>
+        <ProgressBar Height="4" DockPanel.Dock="Bottom" Value="100"/>
         <StatusBar DockPanel.Dock="Bottom">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
             <StatusBarItem>
-                <TextBlock Text="Ready"/>
+                <TextBlock DockPanel.Dock="Left" Text="Ready"/>
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="2">
+                <Button x:Name="StartBtn" DockPanel.Dock="Right" Content="{Binding StartButtonText}" Click="OnStart"/>
             </StatusBarItem>
         </StatusBar>
         <ScrollViewer>
@@ -121,9 +139,6 @@
                 <GroupBox Header="Console" x:Name="ConsolePanel">
                     <TextBox IsReadOnly="True" Text="{Binding ConsoleOutput}" Height="100" MaxHeight="100" VerticalScrollBarVisibility="Auto" BorderThickness="0" TextChanged="OnConsoleOutputChanged"/>
                 </GroupBox>
-                <StackPanel x:Name="StartPanel" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{Binding StartButtonText}" Click="OnStart"/>
-                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

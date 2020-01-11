@@ -31,7 +31,7 @@ namespace LiZhangBo
         {
             InitializeComponent();
             DataContext = Configurations;
-            StartPanel.DataContext = OperatingState;
+            StartBtn.DataContext = OperatingState;
             ConsolePanel.DataContext = OperatingState;
         }
 
