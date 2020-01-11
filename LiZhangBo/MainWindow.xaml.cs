@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -65,11 +66,23 @@ namespace LiZhangBo
                 state.Cts.Cancel();
                 return;
             }
+            var startAt = DateTime.UtcNow;
             var timeout = TimeSpan.FromMinutes(5);
             var cts = (state.Cts = new CancellationTokenSource(timeout));
             var config = Configurations;
             var videoConfig = config.VideoConfiguration;
-            var onExited = new EventHandler((_, e_) =>
+            var elapsedEventHandler = new ElapsedEventHandler((_, e_) =>
+            {
+                Status.Status = $"{DateTime.UtcNow - startAt:hh\\:mm\\:ss} processing ...";
+            });
+            var timer = new System.Timers.Timer
+            {
+                AutoReset = true,
+                Interval = TimeSpan.FromSeconds(1).TotalMilliseconds,
+                Enabled = true
+            };
+            timer.Elapsed += elapsedEventHandler;
+            var onExited = new EventHandler((sender_, e_) =>
             {
                 try
                 {
@@ -79,6 +92,24 @@ namespace LiZhangBo
                 catch (Exception)
                 {
                     // never throw
+                }
+                finally
+                {
+                    timer.Stop();
+                    Status.IsIndeterminate = false;
+                    if (!(sender_ is Exception) && !cts.IsCancellationRequested)
+                    {
+                        Status.Value = Status.Maximum;
+                        Status.Status = $"{DateTime.UtcNow - startAt:hh\\:mm\\:ss\\.fff} done";
+                    }
+                    else
+                    {
+                        Status.Value = Status.Minimum;
+                        if (sender_ is Exception)
+                            Status.Status = (sender_ as Exception).Message;
+                        else if (cts.IsCancellationRequested)
+                            Status.Status = "processing cancelled";
+                    }
                 }
             });
             state.Task = Task.Run(() =>
@@ -129,10 +160,12 @@ namespace LiZhangBo
                     proc.Start();
                     proc.BeginOutputReadLine();
                     proc.BeginErrorReadLine();
+                    Status.IsIndeterminate = true;
+                    elapsedEventHandler(this, null);
                 }
                 catch (Exception ex)
                 {
-                    onExited(this, EventArgs.Empty);
+                    onExited(ex, EventArgs.Empty);
                     MessageBox.Show(ex.StackTrace, ex.Message, MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             });

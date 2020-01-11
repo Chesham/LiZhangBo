@@ -38,8 +38,8 @@
         <local:FFMpegConfigurations/>
     </Window.DataContext>
     <DockPanel>
-        <StackPanel DockPanel.Dock="Bottom">
-            <StatusBar x:Name="StatusPanel">
+        <StackPanel DockPanel.Dock="Bottom" x:Name="StatusPanel">
+            <StatusBar>
                 <StatusBar.ItemsPanel>
                     <ItemsPanelTemplate>
                         <Grid>
