@@ -90,17 +90,47 @@ namespace LiZhangBo
                     Enabled = true
                 };
                 timer.Elapsed += elapsedEventHandler;
+                var seek = config.Seek.ParseToTimeSpan();
+                var to = config.To.ParseToTimeSpan();
+                if (seek != null && to == null || seek == null && to != null)
+                    throw new ArgumentNullException();
+                var sizeLimit = seek == null ? null : config.SizeLimit.ParseSize() * 8 / (to - seek).Value.TotalSeconds;
+                if (sizeLimit.HasValue)
+                    sizeLimit = Math.Round(sizeLimit.Value);
+                var bitrateLimit = config.BitrateLimit.ParseSize();
+                if (sizeLimit > bitrateLimit)
+                    sizeLimit = bitrateLimit;
+                var sizeLimitSwitch = sizeLimit == null ? string.Empty : $"{sizeLimit}".WithSwitch("-b:v");
+                var videoSettings = videoConfig.Enabled ? $"-c:v {videoConfig.Codec}{(videoConfig.Is2Passing ? " -pass 1" : string.Empty)}{(seek == null ? string.Empty : sizeLimitSwitch)}" : "-vn";
+                var args = $@"-y {config.Seek.WithSwitch("-ss")}{config.To.WithSwitch("-to")} -i ""{config.SourcePath}"" {videoSettings}{(config.AudioConfiguration.Enabled ? string.Empty : " -an")} ""{config.TargetPath}""";
+                var proc = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = config.Executable,
+                        Arguments = args,
+                        RedirectStandardError = true,
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        StandardErrorEncoding = Encoding.UTF8,
+                    },
+                    EnableRaisingEvents = true
+                };
+                var cancelDelegation = cts.Token.Register(() => proc.Kill());
                 var onExited = new EventHandler((sender_, e_) =>
                 {
                     try
                     {
                         state.Task = null;
                         state.Cts = null;
+                        cancelDelegation.Dispose();
                     }
                     catch (Exception)
                     {
-                    // never throw
-                }
+                        // never throw
+                    }
                     finally
                     {
                         timer.Stop();
@@ -124,35 +154,6 @@ namespace LiZhangBo
                 {
                     try
                     {
-                        var seek = config.Seek.ParseToTimeSpan();
-                        var to = config.To.ParseToTimeSpan();
-                        if (seek != null && to == null || seek == null && to != null)
-                            throw new ArgumentNullException();
-                        var sizeLimit = seek == null ? null : config.SizeLimit.ParseSize() * 8 / (to - seek).Value.TotalSeconds;
-                        if (sizeLimit.HasValue)
-                            sizeLimit = Math.Round(sizeLimit.Value);
-                        var bitrateLimit = config.BitrateLimit.ParseSize();
-                        if (sizeLimit > bitrateLimit)
-                            sizeLimit = bitrateLimit;
-                        var sizeLimitSwitch = sizeLimit == null ? string.Empty : $"{sizeLimit}".WithSwitch("-b:v");
-                        var videoSettings = videoConfig.Enabled ? $"-c:v {videoConfig.Codec}{(videoConfig.Is2Passing ? " -pass 1" : string.Empty)}{(seek == null ? string.Empty : sizeLimitSwitch)}" : "-vn";
-                        var args = $@"-y {config.Seek.WithSwitch("-ss")}{config.To.WithSwitch("-to")} -i ""{config.SourcePath}"" {videoSettings}{(config.AudioConfiguration.Enabled ? string.Empty : " -an")} ""{config.TargetPath}""";
-                        var proc = new Process
-                        {
-                            StartInfo = new ProcessStartInfo
-                            {
-                                FileName = config.Executable,
-                                Arguments = args,
-                                RedirectStandardError = true,
-                                RedirectStandardOutput = true,
-                                UseShellExecute = false,
-                                CreateNoWindow = true,
-                                StandardOutputEncoding = Encoding.UTF8,
-                                StandardErrorEncoding = Encoding.UTF8,
-                            },
-                            EnableRaisingEvents = true
-                        };
-                        cts.Token.Register(() => proc.Kill());
                         var procOutput = new StringBuilder();
                         proc.OutputDataReceived += (_, e_) =>
                         {
